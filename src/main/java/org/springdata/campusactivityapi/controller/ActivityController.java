@@ -32,7 +32,6 @@ public class ActivityController {
         log.info("createActivity");
         activityService.addActivity(dto);
         return Result.success();
-
     }
 
     //查询活动（公开：不登录也能看，方便游客浏览活动）

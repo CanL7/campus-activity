@@ -84,6 +84,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     //定时任务扫描过期未支付报名表
     @Override
     @Scheduled(cron = "0/30 * * * * ?")
+    @Transactional
     public void scanExpiredEnrollment() {
         //扫描并接住过期表 这里是status = 0
         List<ActivityEnrollment> expiredEnrollments = enrollmentMapper.selectExpiredEnrollment();
