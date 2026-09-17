@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: campus-activity-api
+  datasource:
+    url: jdbc:mysql://localhost:3306/campus_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: campus_app
+    password: Campus123456!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+jwt:
+  # ${JWT_SECRET:默认值} —— 优先读环境变量 JWT_SECRET，没有就用冒号后面的默认值。
+  # 这样代码库/配置文件里没有任何真实密钥，传到 GitHub 也不怕（生产环境用环境变量注入）。
+  #
+  # ⚠️ 密钥长度决定签名算法：jjwt 的 signWith(key) 按 key 长度自动选，不用手写算法名
+  #      32 字节 → HS256，48 字节 → HS384，64 字节 → HS512
+  #    （实测这个默认值 48 字节，签出来的是 HS384，token 的 header 里能看到）
+  #    少于 32 字节会直接抛 WeakKeyException 启动失败
+  secret: ${JWT_SECRET:campus-activity-dev-secret-key-at-least-32-bytes}
+  # token 有效期（分钟）。短一点更安全，但要配合前端"过期自动重登"
+  expire-minutes: 30
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: org.springdata.campusactivityapi.pojo.entity
+  configuration:
+    # 下划线转驼峰：start_time -> startTime, enrolled_count -> enrolledCount
+    # 不开这个，实体里所有带下划线的字段查出来都是 null
+    map-underscore-to-camel-case: true

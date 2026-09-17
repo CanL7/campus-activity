@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.springdata.campusactivityapi.mapper.UserMapper">
+    <insert id="insertUser">
+        insert into users (username,password,nickname,status)
+        values (#{userName},#{password},#{nickName},#{status})
+    </insert>
+
+    <update id="updateUser">
+        update users
+        <set>
+            <!--set是处理重复逗号的 -->
+            <if test="nickName != null">nickname = #{nickName},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteUserById" >
+        delete from users where id = #{id}
+    </delete>
+
+
+
+    <select id="selectUserByUsername" resultType="org.springdata.campusactivityapi.pojo.entity.User">
+        select * from users where username = #{userName}
+    </select>
+
+    <select id="selectUserById" resultType="org.springdata.campusactivityapi.pojo.vo.UserVO">
+        select username, nickname, status, role from users where id = #{id}
+        <!-- 返回为了保护数据安全 选择VO 所以这里查询我们不查完 选择指定字段 -->
+    </select>
+</mapper>

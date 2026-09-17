@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.springdata.campusactivityapi.mapper.ActivityMapper">
+
+    <insert id="insertActivity" useGeneratedKeys="true" keyProperty="id">
+        insert into activity (title, description, location, start_time, end_time, capacity, enrolled_count, status)
+        values (#{title}, #{description}, #{location}, #{startTime}, #{endTime}, #{capacity}, #{enrolledCount}, #{status})
+    </insert>
+
+    <update id="updateActivity">
+        update activity
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="capacity != null">capacity = #{capacity},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="tryEnroll">
+        update activity set enrolled_count = enrolled_count + 1
+                        where id = #{id} and capacity > enrolled_count
+    </update>
+
+    <update id="rollbackCountBatch">
+        update activity a
+        join (
+            select activity_id, count(*) cnt
+            from activity_enrollment
+            where status = 2
+            and id in
+                <foreach collection="enrollmentIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            group by activity_id
+        ) t on a.id = t.activity_id
+        set a.enrolled_count = a.enrolled_count - t.cnt
+        where a.enrolled_count &gt;= t.cnt
+    </update>
+
+    <update id="rollbackCount">
+        update activity a
+        join(
+            select activity_id
+            from activity_enrollment
+            where id = #{enrollmentId} and status = 2
+            ) t on a.id = t.activity_id
+        set a.enrolled_count = a.enrolled_count - 1
+        where a.enrolled_count &gt;= 1
+    </update>
+
+    <delete id="deleteActivity">
+        delete from activity where id = #{id}
+    </delete>
+
+    <select id="selectActivityById" resultType="org.springdata.campusactivityapi.pojo.vo.ActivityVO">
+        select id, title, description, location, start_time, end_time, capacity, enrolled_count, status
+        from activity where id = #{id}
+    </select>
+
+    <!--
+        活动列表：分页交给 PageHelper（它会自动追加 LIMIT，所以这条 SQL 末尾不能有分号）。
+
+        排序用 (status, start_time) 这个索引：
+          status 是等值条件 → 用到索引前缀
+          start_time 和索引里的顺序一致 → 直接按索引读出来就是有序的，不需要额外排序
+        如果改成 order by create_time，索引里没有这列 → 会多出 Using filesort。
+    -->
+    <select id="selectActivities" resultType="org.springdata.campusactivityapi.pojo.vo.ActivityVO">
+        select id, title, description, location, start_time, end_time, capacity, enrolled_count, status
+        from activity a
+        <where>
+            <if test="status != null">and a.status = #{status}</if>
+            <if test="keyword != null and keyword != ''">
+                and a.title like concat('%', #{keyword}, '%')
+            </if>
+        </where>
+        order by a.start_time, a.id
+    </select>
+
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.springdata.campusactivityapi.mapper.EnrollmentMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into activity_enrollment (activity_id,user_id,status,expire_time)
+        values (#{activityId},#{userId},#{status},#{expireTime})
+    </insert>
+
+    <update id="updateStatusById">
+        update activity_enrollment set status = 2
+        where id = #{id}
+          and status = 0
+          and user_id = #{userId}
+    </update>
+
+    <update id="markExpiredBatch">
+        update activity_enrollment set status = 2
+        where status = 0 and id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="updateStatusAfterPay" >
+        update activity_enrollment set status = 1
+        where id = #{id}
+          and status = 0
+          and expire_time > now()
+          and user_id = #{userId}
+    </update>
+
+
+    <select id="selectExpiredEnrollment" resultType="org.springdata.campusactivityapi.pojo.entity.ActivityEnrollment">
+        select id, activity_id, user_id, status, expire_time, create_time
+        from activity_enrollment
+        where status = 0 and expire_time &lt; now()
+    </select>
+
+
+    <!-- 我的报名列表：分页交给 PageHelper，这里只写 join + 筛选 + 排序 -->
+    <select id="selectPage" resultType="org.springdata.campusactivityapi.pojo.vo.EnrollmentVO">
+        select ae.id, ae.activity_id, ae.user_id, ae.status, ae.expire_time, ae.create_time,
+               a.title, a.location
+        from activity_enrollment ae
+        join activity a on a.id = ae.activity_id
+        where ae.user_id = #{userId}
+        order by ae.create_time desc, ae.id desc
+    </select>
+
+</mapper>
